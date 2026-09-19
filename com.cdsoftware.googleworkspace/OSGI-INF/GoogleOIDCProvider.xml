@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<scr:component
+    xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0"
+    immediate="true"
+    name="com.cdsoftware.googleworkspace.oidc.GoogleOIDCProvider">
+
+    <property
+        name="name"
+        value="Google"/>
+
+    <service>
+        <provide
+            interface="com.trekglobal.idempiere.rest.api.oidc.IOIDCProvider"/>
+    </service>
+
+    <implementation
+        class="com.cdsoftware.googleworkspace.oidc.GoogleOIDCProvider"/>
+
+</scr:component>
