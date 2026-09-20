@@ -5,11 +5,11 @@ import org.compiere.model.MRequest;
 import org.compiere.model.MRole;
 import org.compiere.model.PO;
 
-import com.cdsoftware.googleworkspace.chat.GoogleChatAuthorizationService;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommand;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommandResult;
 import com.cdsoftware.googleworkspace.chat.GoogleChatExecutionContext;
 import com.cdsoftware.googleworkspace.chat.card.RequestCardBuilder;
+import com.cdsoftware.googleworkspace.service.GoogleChatAuthorizationService;
 import com.cdsoftware.googleworkspace.service.RequestService;
 
 public class RequestDetailCommand {

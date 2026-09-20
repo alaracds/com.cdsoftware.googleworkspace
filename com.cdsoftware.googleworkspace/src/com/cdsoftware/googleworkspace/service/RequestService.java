@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.compiere.model.MRequest;
+import org.compiere.model.MRequestUpdate;
 import org.compiere.model.Query;
 
 public class RequestService {
@@ -79,4 +80,39 @@ public class RequestService {
                 .first();
     }
 
+    public MRequest findRequest(
+            Properties ctx,
+            int cBPartnerId,
+            int requestId) {
+
+        return new Query(
+                ctx,
+                MRequest.Table_Name,
+                "C_BPartner_ID=? AND R_Request_ID=?",
+                null)
+                .setClient_ID()
+                .setOnlyActiveRecords(true)
+                .setApplyAccessFilter(true)
+                .setParameters(cBPartnerId, requestId)
+                .first();
+    }
+
+    public List<MRequestUpdate> findUpdates(
+            Properties ctx,
+            int requestId,
+            int limit) {
+
+        return new Query(
+                ctx,
+                MRequestUpdate.Table_Name,
+                "R_Request_ID=?",
+                null)
+                .setClient_ID()
+                .setOnlyActiveRecords(true)
+                .setApplyAccessFilter(true)
+                .setParameters(requestId)
+                .setOrderBy("Created DESC")
+                .setPageSize(limit)
+                .list();
+    }
 }

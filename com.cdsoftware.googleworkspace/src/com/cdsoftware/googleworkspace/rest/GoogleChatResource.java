@@ -1,5 +1,6 @@
 package com.cdsoftware.googleworkspace.rest;
 
+import com.cdsoftware.googleworkspace.chat.GoogleChatActionService;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommand;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommandResult;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommandService;
@@ -45,9 +46,147 @@ public class GoogleChatResource {
         GoogleChatEvent event =
                 gson.fromJson(body, GoogleChatEvent.class);
 
+        /*
+         * Aplicación agregada a un Space
+         */
+        if (event.chat != null
+                && event.chat.addedToSpacePayload != null
+                && event.chat.addedToSpacePayload.space != null) {
+
+            String googleSpaceId =
+                    event.chat.addedToSpacePayload.space.name;
+
+            System.out.println(
+                    ">>> Google Chat app agregada a un Space <<<");
+
+            System.out.println(
+                    "Space: " + googleSpaceId);
+
+            /*
+             * Verificar si el Space ya está configurado
+             */
+            GoogleChatSpaceService spaceService =
+                    new GoogleChatSpaceService();
+
+            PO chatSpace =
+                    spaceService.findByGoogleSpaceId(
+                            googleSpaceId);
+
+            GoogleChatCommandResult result;
+
+            if (chatSpace == null) {
+
+                result = GoogleChatCommandResult.text(
+                        "iDempiere fue agregado correctamente "
+                        + "a este espacio.\n\n"
+                        + "Este espacio todavía no está "
+                        + "configurado en iDempiere.\n\n"
+                        + "Google Space ID: "
+                        + googleSpaceId);
+
+            } else {
+
+                result = GoogleChatCommandResult.text(
+                        "iDempiere fue agregado correctamente "
+                        + "a este espacio.\n\n"
+                        + "Configuración: "
+                        + chatSpace.get_ValueAsString("Name"));
+            }
+
+            return buildResponse(
+                    result,
+                    gson);
+        }
+
+        if (event.chat != null
+                && event.chat.buttonClickedPayload != null) {
+
+            String action = null;
+            String requestId = null;
+
+            if (event.commonEventObject != null
+                    && event.commonEventObject.parameters != null) {
+
+                action =
+                        event.commonEventObject.parameters.get("action");
+
+                requestId =
+                        event.commonEventObject.parameters.get("requestId");
+            }
+
+            String googleUserId =
+                    event.chat.user != null
+                            ? event.chat.user.name
+                            : null;
+
+            String googleSpaceId =
+                    event.chat.buttonClickedPayload.space != null
+                            ? event.chat.buttonClickedPayload.space.name
+                            : null;
+
+            PO space =
+                    new GoogleChatSpaceService()
+                            .findByGoogleSpaceId(
+                                    googleSpaceId);
+
+            if (space == null) {
+                return buildResponse(
+                        GoogleChatCommandResult.text(
+                                "Este espacio de Google Chat no está "
+                                + "configurado en iDempiere."),
+                        gson);
+            }
+
+            PO chatUser =
+                    new GoogleChatUserService()
+                            .findByGoogleUserId(
+                                    googleUserId);
+
+            if (chatUser == null) {
+                return buildResponse(
+                        GoogleChatCommandResult.text(
+                                "Tu usuario de Google Chat no está "
+                                + "configurado en iDempiere."),
+                        gson);
+            }
+
+            GoogleChatActionService actionService =
+                    new GoogleChatActionService();
+
+            GoogleChatCommandResult result =
+                    actionService.execute(
+                            action,
+                            requestId,
+                            space,
+                            chatUser);
+
+            return buildResponse(
+                    result,
+                    gson);
+        }
+
         String nombre = event.chat.user.displayName;
         String email = event.chat.user.email;
-        String mensaje = event.chat.messagePayload.message.text;
+        String mensaje =
+                event.chat.messagePayload.message.argumentText;
+
+        if (mensaje == null || mensaje.isBlank()) {
+            mensaje =
+                    event.chat.messagePayload.message.text;
+        }
+
+        mensaje = mensaje.trim();
+        System.out.println(
+                "Message.text: "
+                + event.chat.messagePayload.message.text);
+
+        System.out.println(
+                "Message.argumentText: "
+                + event.chat.messagePayload.message.argumentText);
+
+        System.out.println(
+                "Mensaje procesado: "
+                + mensaje);
         String space = event.chat.messagePayload.space.name;
         String googleUserId = event.chat.user.name;
 
@@ -144,6 +283,15 @@ public class GoogleChatResource {
             }
         }
 
+        return buildResponse(
+                result,
+                gson);
+    }
+
+    private Response buildResponse(
+            GoogleChatCommandResult result,
+            Gson gson) {
+
         JsonObject message = new JsonObject();
 
         if (result.hasCard()) {
@@ -151,12 +299,19 @@ public class GoogleChatResource {
             JsonArray cards = new JsonArray();
 
             JsonObject cardWrapper = new JsonObject();
-            cardWrapper.addProperty("cardId", "idempiere-card");
-            cardWrapper.add("card", result.getCard());
+            cardWrapper.addProperty(
+                    "cardId",
+                    "idempiere-card");
+
+            cardWrapper.add(
+                    "card",
+                    result.getCard());
 
             cards.add(cardWrapper);
 
-            message.add("cardsV2", cards);
+            message.add(
+                    "cardsV2",
+                    cards);
 
         } else {
 
@@ -165,21 +320,30 @@ public class GoogleChatResource {
                     result.getText());
         }
 
+        JsonObject createMessageAction =
+                new JsonObject();
 
-        JsonObject createMessageAction = new JsonObject();
-        createMessageAction.add("message", message);
+        createMessageAction.add(
+                "message",
+                message);
 
-        JsonObject chatDataAction = new JsonObject();
+        JsonObject chatDataAction =
+                new JsonObject();
+
         chatDataAction.add(
                 "createMessageAction",
                 createMessageAction);
 
-        JsonObject hostAppDataAction = new JsonObject();
+        JsonObject hostAppDataAction =
+                new JsonObject();
+
         hostAppDataAction.add(
                 "chatDataAction",
                 chatDataAction);
 
-        JsonObject response = new JsonObject();
+        JsonObject response =
+                new JsonObject();
+
         response.add(
                 "hostAppDataAction",
                 hostAppDataAction);
@@ -196,4 +360,5 @@ public class GoogleChatResource {
                         MediaType.APPLICATION_JSON)
                 .build();
     }
+
 }

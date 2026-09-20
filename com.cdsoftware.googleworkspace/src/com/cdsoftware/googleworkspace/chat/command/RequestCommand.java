@@ -6,10 +6,11 @@ import org.compiere.model.MRequest;
 import org.compiere.model.MRole;
 import org.compiere.model.PO;
 
-import com.cdsoftware.googleworkspace.chat.GoogleChatAuthorizationService;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommand;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommandResult;
 import com.cdsoftware.googleworkspace.chat.GoogleChatExecutionContext;
+import com.cdsoftware.googleworkspace.chat.card.RequestsCardBuilder;
+import com.cdsoftware.googleworkspace.service.GoogleChatAuthorizationService;
 import com.cdsoftware.googleworkspace.service.RequestService;
 import com.cdsoftware.googleworkspace.service.RequestService.StatusFilter;
 
@@ -92,21 +93,30 @@ public class RequestCommand {
 	                + " para este socio de negocio.");
 	    }
 
-	    StringBuilder response = new StringBuilder();
+	    RequestsCardBuilder cardBuilder =
+	            new RequestsCardBuilder();
 
-	    response.append("Solicitudes ")
-	            .append(filtro)
-	            .append(":\n\n");
+	    String title;
 
-	    for (MRequest request : requests) {
+	    switch (statusFilter) {
+	        case CLOSED:
+	            title = "Solicitudes cerradas";
+	            break;
 
-	        response.append("• ")
-	                .append(request.getDocumentNo())
-	                .append(" - ")
-	                .append(request.getSummary())
-	                .append("\n");
+	        case ALL:
+	            title = "Todas las solicitudes";
+	            break;
+
+	        case OPEN:
+	        default:
+	            title = "Solicitudes abiertas";
+	            break;
 	    }
 
-	    return GoogleChatCommandResult.text(response.toString());
+	    return GoogleChatCommandResult.card(
+	            cardBuilder.build(
+	                    title,
+	                    requests));
+
 	}
 }

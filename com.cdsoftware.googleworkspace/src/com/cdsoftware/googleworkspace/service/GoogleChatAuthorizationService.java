@@ -1,12 +1,10 @@
-package com.cdsoftware.googleworkspace.chat;
+package com.cdsoftware.googleworkspace.service;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.compiere.model.MRequest;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.util.DB;
