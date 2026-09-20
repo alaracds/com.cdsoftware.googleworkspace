@@ -24,24 +24,55 @@ public class GoogleChatAuthorizationService {
      * @param adUserId AD_User_ID to evaluate
      * @return roles with read access to R_Request
      */
-    public List<MRole> getRequestReadRoles(int adUserId) {
+	public List<MRole> getReadRoles(
+	        int adUserId,
+	        int tableId) {
 
-        List<MRole> assignedRoles = getUserRoles(adUserId);
-        List<Integer> requestWindowIds = getWindowIds(MRequest.Table_ID);
-        List<MRole> accessibleRoles = new ArrayList<>();
+	    List<MRole> assignedRoles =
+	            getUserRoles(adUserId);
 
-        for (MRole role : assignedRoles) {
-            if (role.isUseUserOrgAccess()) {
-                role.setAD_User_ID(adUserId);
-            }
+	    List<Integer> windowIds =
+	            getWindowIds(tableId);
 
-            if (hasReadAccess(role, MRequest.Table_ID, requestWindowIds)) {
-                accessibleRoles.add(role);
-            }
-        }
+	    List<MRole> accessibleRoles =
+	            new ArrayList<>();
 
-        return accessibleRoles;
-    }
+	    for (MRole role : assignedRoles) {
+
+	        if (role.isUseUserOrgAccess()) {
+	            role.setAD_User_ID(adUserId);
+	        }
+
+	        if (hasReadAccess(
+	                role,
+	                tableId,
+	                windowIds)) {
+
+	            accessibleRoles.add(role);
+	        }
+	    }
+
+	    return accessibleRoles;
+	}
+
+	public MRole getReadRole(
+	        int adUserId,
+	        int adRoleId,
+	        int tableId) {
+
+	    List<MRole> roles =
+	            getReadRoles(adUserId, tableId);
+
+	    for (MRole role : roles) {
+
+	        if (role.getAD_Role_ID() == adRoleId) {
+	            return role;
+	        }
+	    }
+
+	    return null;
+	}
+
 
     private List<MRole> getUserRoles(int adUserId) {
 
@@ -67,13 +98,26 @@ public class GoogleChatAuthorizationService {
             int tableId,
             List<Integer> windowIds) {
 
+        boolean hasWindowAccess = false;
+
         for (int windowId : windowIds) {
-            if (role.getWindowAccess(windowId) != null) {
-                return true;
+
+            Boolean windowAccess =
+                    role.getWindowAccess(windowId);
+
+            if (Boolean.TRUE.equals(windowAccess)) {
+                hasWindowAccess = true;
+                break;
             }
         }
 
-        return role.isTableAccess(tableId, true);
+        if (!hasWindowAccess) {
+            return false;
+        }
+
+        return role.isTableAccess(
+                tableId,
+                true);
     }
 
     private List<Integer> getWindowIds(int tableId) {

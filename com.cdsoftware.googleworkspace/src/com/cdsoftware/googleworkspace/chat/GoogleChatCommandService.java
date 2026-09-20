@@ -6,12 +6,20 @@ import com.cdsoftware.googleworkspace.chat.command.RequestCommand;
 
 public class GoogleChatCommandService {
 
-    public String execute(GoogleChatCommand command, PO chatSpace, int adUserId) {
+	public String execute(
+	        GoogleChatCommand command,
+	        PO chatSpace,
+	        int adUserId,
+	        int adRoleId) {
 
         switch (command.getCommand()) {
 
-            case "solicitudes":
-                return new RequestCommand().execute(command, chatSpace, adUserId);
+        case "solicitudes":
+            return new RequestCommand().execute(
+                    command,
+                    chatSpace,
+                    adUserId,
+                    adRoleId);
 
             case "facturas":
                 return "Ejecutando comando de facturas."
