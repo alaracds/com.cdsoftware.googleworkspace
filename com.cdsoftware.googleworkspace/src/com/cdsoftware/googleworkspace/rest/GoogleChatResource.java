@@ -1,11 +1,13 @@
 package com.cdsoftware.googleworkspace.rest;
 
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommand;
+import com.cdsoftware.googleworkspace.chat.GoogleChatCommandResult;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommandService;
 import com.cdsoftware.googleworkspace.chat.GoogleChatEvent;
 import com.cdsoftware.googleworkspace.chat.GoogleChatSpaceService;
 import com.cdsoftware.googleworkspace.chat.GoogleChatUserService;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import javax.ws.rs.Consumes;
@@ -73,25 +75,25 @@ public class GoogleChatResource {
         PO chatSpace =
                 spaceService.findByGoogleSpaceId(space);
 
-        String respuesta;
+        GoogleChatCommandResult result;
 
         /*
          * Usuario no registrado
          */
         if (chatUser == null) {
 
-            respuesta =
+            result = GoogleChatCommandResult.text(
                     "Tu usuario de Google Chat no está autorizado "
-                    + "para usar esta aplicación.";
+                    + "para usar esta aplicación.");
 
         /*
          * Space no registrado
          */
         } else if (chatSpace == null) {
 
-            respuesta =
+            result = GoogleChatCommandResult.text(
                     "Este espacio de Google Chat no está configurado "
-                    + "en iDempiere.";
+                    + "en iDempiere.");
 
         } else {
 
@@ -124,27 +126,45 @@ public class GoogleChatResource {
                 GoogleChatCommandService commandService =
                         new GoogleChatCommandService();
 
-                respuesta = commandService.execute(
-                        command,
-                        chatSpace,
-                        adUserId,
-                        adRoleId);
+                result =
+                        commandService.execute(
+                                command,
+                                chatSpace,
+                                adUserId,
+                                adRoleId);
 
             } else {
 
-                respuesta = "Hola " + nombre
+                result = GoogleChatCommandResult.text(
+                        "Hola " + nombre
                         + ". Space reconocido: "
                         + chatSpace.get_ValueAsString("Name")
                         + ". Recibí tu mensaje: "
-                        + mensaje;
+                        + mensaje);
             }
         }
 
-        /*
-         * Construir respuesta para Google Chat
-         */
         JsonObject message = new JsonObject();
-        message.addProperty("text", respuesta);
+
+        if (result.hasCard()) {
+
+            JsonArray cards = new JsonArray();
+
+            JsonObject cardWrapper = new JsonObject();
+            cardWrapper.addProperty("cardId", "idempiere-card");
+            cardWrapper.add("card", result.getCard());
+
+            cards.add(cardWrapper);
+
+            message.add("cardsV2", cards);
+
+        } else {
+
+            message.addProperty(
+                    "text",
+                    result.getText());
+        }
+
 
         JsonObject createMessageAction = new JsonObject();
         createMessageAction.add("message", message);

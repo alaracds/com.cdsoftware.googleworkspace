@@ -8,13 +8,14 @@ import org.compiere.model.PO;
 
 import com.cdsoftware.googleworkspace.chat.GoogleChatAuthorizationService;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommand;
+import com.cdsoftware.googleworkspace.chat.GoogleChatCommandResult;
 import com.cdsoftware.googleworkspace.chat.GoogleChatExecutionContext;
 import com.cdsoftware.googleworkspace.service.RequestService;
 import com.cdsoftware.googleworkspace.service.RequestService.StatusFilter;
 
 public class RequestCommand {
 
-	public String execute(
+	public GoogleChatCommandResult execute(
 	        GoogleChatCommand command,
 	        PO chatSpace,
 	        int adUserId,
@@ -30,7 +31,8 @@ public class RequestCommand {
 		                MRequest.Table_ID);
 
 		if (role == null) {
-		    return "El rol configurado para tu usuario no tiene permisos para consultar solicitudes en iDempiere.";
+		    return GoogleChatCommandResult.text("El rol configurado para tu usuario no tiene "
+		            + "permisos para consultar solicitudes en iDempiere.");
 		}
 
 		GoogleChatExecutionContext executionContext =
@@ -42,7 +44,7 @@ public class RequestCommand {
 	            chatSpace.get_ValueAsInt("C_BPartner_ID");
 
 	    if (cBPartnerId <= 0) {
-	        return "Este Space no tiene un socio de negocio asociado.";
+	        return GoogleChatCommandResult.text("Este Space no tiene un socio de negocio asociado.");
 	    }
 
 	    String filtro = command.getArguments().trim().toLowerCase();
@@ -68,10 +70,10 @@ public class RequestCommand {
             break;
 
         default:
-            return "Filtro no reconocido: " + filtro
+            return GoogleChatCommandResult.text("Filtro no reconocido: " + filtro
                     + "\nUsa: /solicitudes abiertas, "
                     + "/solicitudes cerradas o "
-                    + "/solicitudes todas";
+                    + "/solicitudes todas");
         }
 
         RequestService requestService =
@@ -85,9 +87,9 @@ public class RequestCommand {
                         5);
 
 	    if (requests.isEmpty()) {
-	        return "No se encontraron solicitudes "
+	        return GoogleChatCommandResult.text("No se encontraron solicitudes "
 	                + filtro
-	                + " para este socio de negocio.";
+	                + " para este socio de negocio.");
 	    }
 
 	    StringBuilder response = new StringBuilder();
@@ -105,6 +107,6 @@ public class RequestCommand {
 	                .append("\n");
 	    }
 
-	    return response.toString();
+	    return GoogleChatCommandResult.text(response.toString());
 	}
 }

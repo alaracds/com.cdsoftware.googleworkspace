@@ -7,16 +7,18 @@ import org.compiere.model.PO;
 
 import com.cdsoftware.googleworkspace.chat.GoogleChatAuthorizationService;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommand;
+import com.cdsoftware.googleworkspace.chat.GoogleChatCommandResult;
 import com.cdsoftware.googleworkspace.chat.GoogleChatExecutionContext;
+import com.cdsoftware.googleworkspace.chat.card.RequestCardBuilder;
 import com.cdsoftware.googleworkspace.service.RequestService;
 
 public class RequestDetailCommand {
 
-    public String execute(
-            GoogleChatCommand command,
-            PO chatSpace,
-            int adUserId,
-            int adRoleId) {
+	public GoogleChatCommandResult execute(
+	        GoogleChatCommand command,
+	        PO chatSpace,
+	        int adUserId,
+	        int adRoleId) {
 
         GoogleChatAuthorizationService authorizationService =
                 new GoogleChatAuthorizationService();
@@ -28,23 +30,23 @@ public class RequestDetailCommand {
                         MRequest.Table_ID);
 
         if (role == null) {
-            return "El rol configurado para tu usuario no tiene permisos "
-                    + "para consultar solicitudes en iDempiere.";
+            return GoogleChatCommandResult.text("El rol configurado para tu usuario no tiene permisos "
+                    + "para consultar solicitudes en iDempiere.");
         }
 
         String documentNo =
                 command.getArguments().trim();
 
         if (documentNo.isEmpty()) {
-            return "Debes indicar el número de solicitud."
-                    + "\nEjemplo: /solicitud 10000002";
+            return GoogleChatCommandResult.text("Debes indicar el número de solicitud."
+                    + "\nEjemplo: /solicitud 10000002");
         }
 
         int cBPartnerId =
                 chatSpace.get_ValueAsInt("C_BPartner_ID");
 
         if (cBPartnerId <= 0) {
-            return "Este Space no tiene un socio de negocio asociado.";
+            return GoogleChatCommandResult.text("Este Space no tiene un socio de negocio asociado.");
         }
 
 		GoogleChatExecutionContext executionContext =
@@ -62,26 +64,15 @@ public class RequestDetailCommand {
                         documentNo);
 
         if (request == null) {
-            return "No se encontró la solicitud "
+            return GoogleChatCommandResult.text("No se encontró la solicitud "
                     + documentNo
-                    + " o no tienes permisos para consultarla.";
+                    + " o no tienes permisos para consultarla.");
         }
 
-        StringBuilder response =
-                new StringBuilder();
+        RequestCardBuilder cardBuilder =
+                new RequestCardBuilder();
 
-        response.append("Solicitud ")
-                .append(request.getDocumentNo())
-                .append("\n\n");
-
-        response.append("Resumen: ")
-                .append(request.getSummary())
-                .append("\n");
-
-        response.append("Creada: ")
-                .append(request.getCreated())
-                .append("\n");
-
-        return response.toString();
+        return GoogleChatCommandResult.card(
+                cardBuilder.build(request));
     }
 }

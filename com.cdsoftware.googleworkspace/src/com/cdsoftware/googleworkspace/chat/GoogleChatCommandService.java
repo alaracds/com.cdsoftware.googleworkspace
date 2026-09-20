@@ -7,7 +7,7 @@ import com.cdsoftware.googleworkspace.chat.command.RequestDetailCommand;
 
 public class GoogleChatCommandService {
 
-	public String execute(
+	public GoogleChatCommandResult execute(
 	        GoogleChatCommand command,
 	        PO chatSpace,
 	        int adUserId,
@@ -29,12 +29,12 @@ public class GoogleChatCommandService {
                     adRoleId);
 
             case "facturas":
-                return "Ejecutando comando de facturas."
-                        + formatArguments(command);
+                return GoogleChatCommandResult.text("Ejecutando comando de facturas."
+                        + formatArguments(command));
 
             default:
-                return "Comando no reconocido: /"
-                        + command.getCommand();
+                return GoogleChatCommandResult.text("Comando no reconocido: /"
+                        + command.getCommand());
         }
     }
 
