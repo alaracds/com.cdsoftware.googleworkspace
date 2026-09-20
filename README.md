@@ -1,6 +1,6 @@
 # com.cdsoftware.googleworkspace
 
-- Copyright: 2024 https://www.casadelsoftware.com
+- Copyright: 2026 https://www.casadelsoftware.com
 - Repository: <https://github.com/alaracds/com.cdsoftware.googleworkspace>
 - License: GPL 2
 
@@ -10,7 +10,7 @@ Google Workspace integration for iDempiere 13. The plugin exposes a Google Chat 
 
 ## Contributors
 
-- 2024 Casa del Software.
+- 2026 Casa del Software.
 
 ## Components
 
