@@ -1,16 +1,16 @@
 package com.cdsoftware.googleworkspace.chat.command;
 
 import java.util.List;
-import java.util.Properties;
 
 import org.compiere.model.MRequest;
 import org.compiere.model.MRole;
 import org.compiere.model.PO;
-import org.compiere.model.Query;
-import org.compiere.util.Env;
 
 import com.cdsoftware.googleworkspace.chat.GoogleChatAuthorizationService;
 import com.cdsoftware.googleworkspace.chat.GoogleChatCommand;
+import com.cdsoftware.googleworkspace.chat.GoogleChatExecutionContext;
+import com.cdsoftware.googleworkspace.service.RequestService;
+import com.cdsoftware.googleworkspace.service.RequestService.StatusFilter;
 
 public class RequestCommand {
 
@@ -33,19 +33,10 @@ public class RequestCommand {
 		    return "El rol configurado para tu usuario no tiene permisos para consultar solicitudes en iDempiere.";
 		}
 
-		Properties userCtx = new Properties();
-
-		userCtx.putAll(Env.getCtx());
-
-		Env.setContext(
-		        userCtx,
-		        Env.AD_USER_ID,
-		        adUserId);
-
-		Env.setContext(
-		        userCtx,
-		        Env.AD_ROLE_ID,
-		        adRoleId);
+		GoogleChatExecutionContext executionContext =
+		        new GoogleChatExecutionContext(
+		                adUserId,
+		                adRoleId);
 
 	    int cBPartnerId =
 	            chatSpace.get_ValueAsInt("C_BPartner_ID");
@@ -53,59 +44,46 @@ public class RequestCommand {
 	    if (cBPartnerId <= 0) {
 	        return "Este Space no tiene un socio de negocio asociado.";
 	    }
-	    
+
 	    String filtro = command.getArguments().trim().toLowerCase();
 
 	    if (filtro.isEmpty()) {
 	        filtro = "abiertas";
 	    }
-	    
-	    String whereClause = "C_BPartner_ID=?";
 
-	    switch (filtro) {
+	    StatusFilter statusFilter;
 
-	        case "abiertas":
-	            whereClause +=
-	                    " AND R_Status_ID IN ("
-	                    + "SELECT R_Status_ID "
-	                    + "FROM R_Status "
-	                    + "WHERE IsOpen='Y'"
-	                    + ")";
-	            break;
+        switch (filtro) {
 
-	        case "cerradas":
-	            whereClause +=
-	                    " AND R_Status_ID IN ("
-	                    + "SELECT R_Status_ID "
-	                    + "FROM R_Status "
-	                    + "WHERE IsClosed='Y'"
-	                    + ")";
-	            break;
+        case "abiertas":
+            statusFilter = StatusFilter.OPEN;
+            break;
 
-	        case "todas":
-	            break;
+        case "cerradas":
+            statusFilter = StatusFilter.CLOSED;
+            break;
 
-	        default:
-	            return "Filtro no reconocido: " + filtro
-	                    + "\nUsa: /solicitudes abiertas, "
-	                    + "/solicitudes cerradas o "
-	                    + "/solicitudes todas";
-	    }
-	    
+        case "todas":
+            statusFilter = StatusFilter.ALL;
+            break;
 
-	    List<MRequest> requests = new Query(
-	            userCtx,
-	            MRequest.Table_Name,
-	            whereClause,
-	            null)
-	            .setClient_ID()
-	            .setOnlyActiveRecords(true)
-	            .setApplyAccessFilter(true)
-	            .setParameters(cBPartnerId)
-	            .setOrderBy("Created DESC")
-	            .setPageSize(5)
-	            .list();
-	    
+        default:
+            return "Filtro no reconocido: " + filtro
+                    + "\nUsa: /solicitudes abiertas, "
+                    + "/solicitudes cerradas o "
+                    + "/solicitudes todas";
+        }
+
+        RequestService requestService =
+                new RequestService();
+
+        List<MRequest> requests =
+                requestService.findRequests(
+                        executionContext.getCtx(),
+                        cBPartnerId,
+                        statusFilter,
+                        5);
+
 	    if (requests.isEmpty()) {
 	        return "No se encontraron solicitudes "
 	                + filtro

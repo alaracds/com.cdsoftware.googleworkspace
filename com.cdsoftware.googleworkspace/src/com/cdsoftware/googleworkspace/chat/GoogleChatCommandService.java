@@ -3,6 +3,7 @@ package com.cdsoftware.googleworkspace.chat;
 import org.compiere.model.PO;
 
 import com.cdsoftware.googleworkspace.chat.command.RequestCommand;
+import com.cdsoftware.googleworkspace.chat.command.RequestDetailCommand;
 
 public class GoogleChatCommandService {
 
@@ -13,6 +14,12 @@ public class GoogleChatCommandService {
 	        int adRoleId) {
 
         switch (command.getCommand()) {
+        case "solicitud":
+            return new RequestDetailCommand().execute(
+                    command,
+                    chatSpace,
+                    adUserId,
+                    adRoleId);
 
         case "solicitudes":
             return new RequestCommand().execute(
